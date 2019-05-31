@@ -1,0 +1,51 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: todo
+  name: todo-redis
+  labels:
+    todo-app-deployment: todo-redis
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+        todo-app-pod: todo-redis
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        todo-app-pod: todo-redis
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: todo-redis
+        image: redis:5.0.3
+        ports:
+        - containerPort: 6379
+        resources:
+          limits:
+            memory: "268435456"
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 15
+          failureThreshold: 3
+          successThreshold: 1
+          periodSeconds: 10
+          timeoutSeconds: 10
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 20
+          failureThreshold: 3
+          successThreshold: 1
+          periodSeconds: 5
+          timeoutSeconds: 1

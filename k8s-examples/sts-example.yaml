@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: pv-hostpath-v0
+ labels:
+   type: local
+spec:
+ storageClassName: manual
+ capacity:
+   storage: 200Mi
+ accessModes:
+   - ReadWriteOnce
+ hostPath:
+   path: "{your-path-to}/kubedata/v0"
+ 
+---
+ 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: pv-hostpath-v1
+ labels:
+   type: local
+spec:
+ storageClassName: manual
+ capacity:
+   storage: 200Mi
+ accessModes:
+   - ReadWriteOnce
+ hostPath:
+   path: "{your-path-to}/kubedata/v1"
+ 
+---
+ 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: pv-hostpath-v2
+ labels:
+   type: local
+spec:
+ storageClassName: manual
+ capacity:
+   storage: 200Mi
+ accessModes:
+   - ReadWriteOnce
+ hostPath:
+   path: "{your-path-to}/kubedata/v2"
+ 
+---
+ 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: pv-hostpath-v3
+ labels:
+   type: local
+spec:
+ storageClassName: manual
+ capacity:
+   storage: 200Mi
+ accessModes:
+   - ReadWriteOnce
+ hostPath:
+   path: "{your-path-to}/kubedata/v3"
+ 
+---
+ 
+apiVersion: v1
+kind: Service
+metadata:
+ name: nginx-headless
+ labels:
+   app: nginx-sts-demo
+spec:
+ ports:
+ - port: 80
+   name: web
+ clusterIP: None
+ selector:
+   app: nginx-sts-demo
+ 
+---
+ 
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+ name: nginx-sts
+spec:
+ serviceName: "nginx-headless"
+ replicas: 4
+ selector:
+   matchLabels:
+     app: nginx-sts-demo
+ template:
+   metadata:
+     labels:
+       app: nginx-sts-demo
+   spec:
+     containers:
+     - name: nginx
+       image: nginx:1.15.9
+       volumeMounts:
+       - name: www
+         mountPath: /var/www/
+ volumeClaimTemplates:
+ - metadata:
+     name: www
+   spec:
+     storageClassName: manual
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: 100Mi
+

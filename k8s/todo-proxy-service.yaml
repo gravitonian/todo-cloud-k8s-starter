@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: todo
+  name: todo-proxy
+  labels:
+    todo-app-service: todo-proxy
+spec:
+  type: LoadBalancer
+  selector:
+    todo-app-pod: todo-proxy
+  ports:
+  - name: "8080"
+    port: 8080
+    targetPort: 80
+

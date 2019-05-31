@@ -1,0 +1,203 @@
+# Using version 2 as 3 does not support resource constraint options (cpu_*, mem_* limits) for non swarm mode in Compose
+version: "2"
+
+services:
+  todo-rabbitmq:
+    container_name: todo-rabbitmq
+    image: rabbitmq:3.7.13-management
+    mem_limit: 200m
+    ports:
+      - 5672:5672
+      - 8081:15672
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+
+  todo-redis:
+    container_name: todo-redis
+    image: redis:5.0.3
+    mem_limit: 256m
+    ports:
+      - 6379:6379
+
+  todo-postgres:
+    container_name: todo-postgres
+    build:
+      context: ./todo-postgres
+      dockerfile: Dockerfile
+    image: todo-postgres:1.0
+    mem_limit: 512m
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  todo-elastic:
+    container_name: todo-elastic
+    image: elasticsearch:6.6.1
+    mem_limit: 512m
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+
+  todo-cache-ingestion:
+    container_name: todo-cache-ingestion
+    build:
+      context: todo-cache-ingestion
+      dockerfile: ../Dockerfile.nodejs.dev
+    image: todo-cache-ingestion:development
+    mem_limit: 128m
+    command: sh /app/start.sh
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - STORAGE_SERVICE_URL=${STORAGE_SERVICE_URL}
+    depends_on:
+      - todo-redis
+      - todo-rabbitmq
+
+  todo-cache-service:
+    container_name: todo-cache-service
+    build:
+      context: todo-cache-service
+      dockerfile: ../Dockerfile.nodejs.dev
+    image: todo-cache-service:development
+    mem_limit: 128m
+    ports:
+      - 3001:3000
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+    depends_on:
+      - todo-redis
+
+  todo-search-ingestion:
+    container_name: todo-search-ingestion
+    build:
+      context: todo-search-ingestion
+      dockerfile: ../Dockerfile.nodejs.dev
+    image: todo-search-ingestion:development
+    mem_limit: 128m
+    command: sh /app/start.sh
+    environment:
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST}
+      - ELASTICSEARCH_PORT=${ELASTICSEARCH_PORT}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+    depends_on:
+      - todo-elastic
+      - todo-rabbitmq
+
+  todo-search-service:
+    container_name: todo-search-service
+    build:
+      context: todo-search-service
+      dockerfile: ../Dockerfile.nodejs.dev
+    image: todo-search-service:development
+    mem_limit: 128m
+    command: sh /app/start.sh
+    ports:
+      - 3002:3000
+    environment:
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST}
+      - ELASTICSEARCH_PORT=${ELASTICSEARCH_PORT}
+    depends_on:
+      - todo-elastic
+
+  todo-storage-ingestion:
+    container_name: todo-storage-ingestion
+    build:
+      context: todo-storage-ingestion
+      dockerfile: ../Dockerfile.nodejs.dev
+    image: todo-storage-ingestion:development
+    mem_limit: 128m
+    command: sh /app/start.sh
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+    depends_on:
+      - todo-postgres
+      - todo-rabbitmq
+
+  todo-storage-service:
+    container_name: todo-storage-service
+    build:
+      context: todo-storage-service
+      dockerfile: ../Dockerfile.nodejs.dev
+    image: todo-storage-service:development
+    mem_limit: 128m
+    ports:
+      - 3003:3000
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      - todo-postgres
+
+  todo-api-gateway:
+    container_name: todo-api-gateway
+    build:
+      context: todo-api-gateway
+      dockerfile: ../Dockerfile.nodejs.dev
+    image: todo-api-gateway:development
+    mem_limit: 128m
+    command: sh /app/start.sh
+    ports:
+      - 3000:3000
+    environment:
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - CACHE_SERVICE_URL=${CACHE_SERVICE_URL}
+      - SEARCH_SERVICE_URL=${SEARCH_SERVICE_URL}
+      - STORAGE_SERVICE_URL=${STORAGE_SERVICE_URL}
+    depends_on:
+      - todo-cache-service
+      - todo-cache-ingestion
+      - todo-search-service
+      - todo-search-ingestion
+      - todo-storage-service
+      - todo-storage-ingestion
+      - todo-rabbitmq
+
+  todo-view:
+    container_name: todo-view
+    build:
+      context: ./todo-view
+      dockerfile: Dockerfile.dev
+    image: todo-view:development
+    mem_limit: 768m
+    ports:
+      - 4200:4200
+    volumes:
+      - ${PWD}/todo-view:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - todo-api-gateway
+
+  todo-proxy:
+    container_name: todo-proxy
+    build:
+      context: ./todo-proxy
+      dockerfile: Dockerfile
+    image: todo-proxy:development
+    mem_limit: 128m
+    ports:
+      - 8080:80
+    depends_on:
+      - todo-api-gateway
+      - todo-view
+
+volumes:
+  postgres-data:
+  elastic-data:
+

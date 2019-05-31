@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: todo
+  name: todo-cache-service
+  labels:
+    todo-app-service: todo-cache-service
+spec:
+  type: ClusterIP
+  selector:
+    todo-app-pod: todo-cache-service
+  ports:
+  - name: "http"
+    port: 3000
+    targetPort: 3000
+

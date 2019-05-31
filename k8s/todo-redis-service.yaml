@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: todo
+  name: todo-redis
+  labels:
+    todo-app-service: todo-redis
+spec:
+  type: ClusterIP
+  selector:
+    todo-app-pod: todo-redis
+  ports:
+  - name: "6379"
+    port: 6379
+    targetPort: 6379
+status:
+  loadBalancer: {}

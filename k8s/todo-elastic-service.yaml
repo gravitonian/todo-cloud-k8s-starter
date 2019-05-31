@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: todo
+  name: todo-elastic
+  labels:
+    todo-app-service: todo-elastic
+spec:
+  type: ClusterIP
+  selector:
+    todo-app-pod: todo-elastic
+  ports:
+  - name: es-http
+    port: 9200
+    targetPort: 9200
+  - name: es-transport
+    port: 9300
+    targetPort: 9300

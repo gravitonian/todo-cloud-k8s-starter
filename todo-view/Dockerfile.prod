@@ -1,0 +1,30 @@
+# Start the builder phase
+###################################################
+FROM node:8.15.1 as builder
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+COPY . .
+
+RUN npm run ng build -- --prod --output-path=dist
+
+# Production run phase
+###################################################
+FROM nginx:1.15.9-alpine
+
+EXPOSE 8080
+
+COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
+
+COPY ./nginx-custom.conf /etc/nginx/conf.d/default.conf
+
+RUN addgroup www-data
+RUN adduser -S -H -g "" -G www-data www-data
+
+RUN touch /var/run/nginx.pid && \
+ chown -R www-data:www-data /var/run/nginx.pid && \
+ chown -R www-data:www-data /var/cache/nginx
+
+USER www-data
+
+

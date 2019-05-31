@@ -1,0 +1,24 @@
+# Development image with all the Node.js stuff in it
+FROM node:8.15.0
+
+# Install Google Chrome
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+RUN apt-get update && apt-get install -y google-chrome-stable
+
+# Set working directory, will be created if it does not exist
+WORKDIR /usr/src/app
+
+# Install application dependencies
+COPY package.json .
+RUN npm install
+
+# Copy application code
+COPY . .
+
+# Info to devs and others that this container needs to have port 4200 exposed externally,
+# i.e. this instruction does not do anything more than info
+EXPOSE 4200
+
+# Start app
+CMD ["npm", "start"]

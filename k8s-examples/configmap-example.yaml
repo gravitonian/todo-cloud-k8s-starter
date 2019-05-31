@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-1
+data:
+  redisHost: todo-redis
+  redisPort: "6379"
+ 
+---
+ 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: configmap-example-cmd-line
+spec:
+  restartPolicy: Never
+  containers:
+  - name: busybox-cmd-line
+    image: busybox
+    command:  [ "/bin/sh", "-c", "echo Redis Host:  $(REDIS_HOST)  Redis Port:  $(REDIS_PORT)"]
+    env:
+      - name: REDIS_HOST
+        valueFrom:
+          configMapKeyRef:
+            name: configmap-1
+            key: redisHost
+      - name: REDIS_PORT
+        valueFrom:
+          configMapKeyRef:
+            name: configmap-1
+            key: redisPort
+ 
+---
+ 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-2
+data:
+  REDIS_HOST: todo-redis
+  REDIS_PORT: "6379"
+ 
+---
+ 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: configmap-example-env
+spec:
+  restartPolicy: Never
+  containers:
+  - name: busybox-env
+    image: busybox
+    command:  [ "/bin/sh", "-c", "--"]
+    args:  ["while true; do sleep 30; done;"]
+    envFrom:
+    - configMapRef:
+        name: configmap-2
+ 
+---
+ 
+apiVersion: v1
+kind: Pod
+metadata:
+   name: configmap-example-volume
+spec:
+   restartPolicy: Never
+   containers:
+     - name:  test-container
+       image: busybox
+       command:  [ "/bin/sh", "-c", "--"]
+       args:  ["while true; do sleep 30; done;"]
+       volumeMounts:
+       - name: config-volume
+         mountPath: /etc/config
+       imagePullPolicy: IfNotPresent
+   volumes:
+     - name: config-volume
+       configMap:
+         name: configmap-2
+

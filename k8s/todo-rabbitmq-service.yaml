@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: todo
+  name: todo-rabbitmq
+  labels:
+    todo-app-service: todo-rabbitmq
+spec:
+  type: ClusterIP
+  selector:
+    todo-app-pod: todo-rabbitmq
+  ports:
+  - name: amqp
+    port: 5672
+    targetPort: 5672
+

@@ -1,0 +1,68 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: todo
+  name: todo-postgres
+  labels:
+    todo-app-deployment: todo-postgres
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+        todo-app-pod: todo-postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        todo-app-pod: todo-postgres
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: todo-postgres
+        image: gravitonian/todo-postgres:1.0
+        envFrom:
+        - configMapRef:
+            name: todo-config
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: todo-secret
+              key: POSTGRES_PASSWORD
+        ports:
+        - containerPort: 5432
+        resources:
+          limits:
+            memory: "1Gi"
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-data
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -h
+            - localhost
+            - -U
+            - todo
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          successThreshold: 3
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -h
+            - localhost
+            - -U
+            - todo
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-data-pvc

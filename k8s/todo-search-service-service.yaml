@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: todo
+  name: todo-search-service
+  labels:
+    todo-app-service: todo-search-service
+spec:
+  type: ClusterIP
+  selector:
+    todo-app-pod: todo-search-service
+  ports:
+  - name: "http"
+    port: 3000
+    targetPort: 3000
+

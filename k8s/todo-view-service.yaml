@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: todo
+  name: todo-view
+  labels:
+    todo-app-service: todo-view
+spec:
+  type: ClusterIP
+  selector:
+    todo-app-pod: todo-view
+  ports:
+  - name: "8080"
+    port: 8080
+    targetPort: 8080
+

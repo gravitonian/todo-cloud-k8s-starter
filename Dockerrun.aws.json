@@ -1,0 +1,102 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "containerDefinitions": [
+    {
+      "name": "todo-rabbitmq",
+      "image": "rabbitmq:3.7.13-management",
+      "hostname": "todo-rabbitmq",
+      "memory": 200,
+      "essential": false
+    },
+    {
+      "name": "todo-cache-ingestion",
+      "image": "gravitonian/todo-cache-ingestion:1.0",
+      "hostname": "todo-cache-ingestion",
+      "memory": 128,
+      "essential": false,
+      "links": ["todo-rabbitmq", "todo-storage-service"],
+      "command": [
+        "sh",
+        "/home/node/app/start.sh"
+      ]
+    },
+    {
+      "name": "todo-cache-service",
+      "image": "gravitonian/todo-cache-service:1.0",
+      "hostname": "todo-cache-service",
+      "memory": 128,
+      "essential": false
+    },
+    {
+      "name": "todo-search-ingestion",
+      "image": "gravitonian/todo-search-ingestion:1.0",
+      "hostname": "todo-search-ingestion",
+      "memory": 128,
+      "essential": false,
+      "links": ["todo-rabbitmq"],
+      "command": [
+        "sh",
+        "/home/node/app/start.sh"
+      ]
+    },
+    {
+      "name": "todo-search-service",
+      "image": "gravitonian/todo-search-service:1.0",
+      "hostname": "todo-search-service",
+      "memory": 128,
+      "essential": false
+    },
+    {
+      "name": "todo-storage-ingestion",
+      "image": "gravitonian/todo-storage-ingestion:1.0",
+      "hostname": "todo-storage-ingestion",
+      "memory": 128,
+      "essential": false,
+      "links": ["todo-rabbitmq"],
+      "command": [
+        "sh",
+        "/home/node/app/start.sh"
+      ]
+    },
+    {
+      "name": "todo-storage-service",
+      "image": "gravitonian/todo-storage-service:1.0",
+      "hostname": "todo-storage-service",
+      "memory": 128,
+      "essential": false
+    },
+    {
+      "name": "todo-api-gateway",
+      "image": "gravitonian/todo-api-gateway:1.0",
+      "hostname": "todo-api-gateway",
+      "memory": 128,
+      "essential": false,
+      "command": [
+        "sh",
+        "/home/node/app/start.sh"
+      ],
+      "links": ["todo-rabbitmq", "todo-cache-service", "todo-cache-ingestion", "todo-search-service",
+        "todo-search-ingestion", "todo-storage-service", "todo-storage-ingestion"]
+    },
+    {
+      "name": "todo-view",
+      "image": "gravitonian/todo-view:1.0",
+      "hostname": "todo-view",
+      "memory": 768,
+      "essential": false
+    },
+    {
+      "name": "todo-proxy",
+      "image": "gravitonian/todo-proxy:1.0",
+      "memory": 128,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80
+        }
+      ],
+      "links": ["todo-view", "todo-api-gateway"]
+    }
+  ]
+}

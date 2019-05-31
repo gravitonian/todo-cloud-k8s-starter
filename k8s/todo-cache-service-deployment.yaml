@@ -1,0 +1,34 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: todo
+  name: todo-cache-service
+  labels:
+    todo-app-deployment: todo-cache-service
+spec:
+  replicas: 2
+  selector:
+      matchLabels:
+        todo-app-pod: todo-cache-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        todo-app-pod: todo-cache-service
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: todo-cache-service
+        image: gravitonian/todo-cache-service:1.0
+        envFrom:
+          - configMapRef:
+              name: todo-config
+        ports:
+        - containerPort: 3000
+        resources:
+          limits:
+            memory: "134217728"

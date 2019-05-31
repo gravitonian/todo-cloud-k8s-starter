@@ -1,0 +1,17 @@
+# Development image with all the Node.js stuff in it
+FROM node:8.15.1
+
+WORKDIR "/app"
+
+COPY ./package.json ./
+
+RUN npm install
+
+COPY . .
+
+# Info to devs and others that this container needs to have port 3000 exposed externally,
+# i.e. this instruction does not do anything more than info
+EXPOSE 3000
+
+CMD ["npm", "start"]
+

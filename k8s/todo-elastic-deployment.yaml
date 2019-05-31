@@ -1,0 +1,55 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: todo
+  name: todo-elastic
+  labels:
+    todo-app-deployment: todo-elastic
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+        todo-app-pod: todo-elastic
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        todo-app-pod: todo-elastic
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: todo-elastic
+        image: elasticsearch:6.6.1
+        env:
+        - name: discovery.type
+          value: single-node
+        ports:
+        - name: es-http
+          containerPort: 9200
+        - name: es-transport
+          containerPort: 9300
+        resources:
+          limits:
+            memory: "1.5Gi"
+        volumeMounts:
+        - mountPath: /usr/share/elasticsearch/data
+          name: elastic-data
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 9200
+            scheme: HTTP
+          timeoutSeconds: 1
+          successThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /_cluster/health
+            port: 9200
+            scheme: HTTP
+          initialDelaySeconds: 360
+          timeoutSeconds: 2
+      volumes:
+      - name: elastic-data
+        persistentVolumeClaim:
+          claimName: elastic-data-pvc

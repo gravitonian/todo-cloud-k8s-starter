@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: todo
+  name: todo-config
+data:
+  REDIS_HOST: todo-redis
+  REDIS_PORT: "6379"
+  ELASTICSEARCH_HOST: todo-elastic
+  ELASTICSEARCH_PORT: "9200"
+  POSTGRES_HOST: todo-postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DATABASE: todo
+  POSTGRES_USER: todo
+  RABBITMQ_DEFAULT_USER: todo
+  RABBITMQ_URL: amqp://todo:todo1234@todo-rabbitmq
+  CACHE_SERVICE_URL: http://todo-cache-service:3000
+  SEARCH_SERVICE_URL: http://todo-search-service:3000
+  STORAGE_SERVICE_URL: http://todo-storage-service:3000

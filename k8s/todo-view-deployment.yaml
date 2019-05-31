@@ -1,0 +1,32 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: todo
+  name: todo-view
+  labels:
+    todo-app-deployment: todo-view
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+        todo-app-pod: todo-view
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        todo-app-pod: todo-view
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: todo-view
+        image: gravitonian/todo-view:1.0
+        ports:
+        - containerPort: 4200
+        - containerPort: 8080
+        resources:
+          limits:
+            memory: "805306368"
