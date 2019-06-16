@@ -4,8 +4,9 @@ const envProps = require('./env_props');
 
 // Elasticsearch Client Setup //////////////////////////////////////////////////////////////////////////////////////////
 const elasticClient = new elasticsearch.Client({
-    // hosts: [ envProps.elasticHost + ':' + envProps.elasticPort]
-    hosts: [ envProps.elasticHost ]
+    hosts: [ envProps.elasticHost + ':' + envProps.elasticPort], // needed when we are running Elastic, we need to set the port
+    //hosts: [ envProps.elasticHost ], // used when Elastic is running as a service in AWS
+    log: 'trace'
 });
 
 const TODO_SEARCH_INDEX_NAME = "todos";
@@ -16,9 +17,9 @@ elasticClient.ping({
     requestTimeout: 30000,
 }, function(error) {
     if (error) {
-        console.error('Something went wrong with Elasticsearch: ' + error);
+        console.error('Something went wrong with Elasticsearch ' + envProps.elasticHost + ':' + envProps.elasticPort + ' : ' + error.message);
     } else {
-        console.log('Elasticsearch client connected');
+        console.log('Elasticsearch client connected to ' + envProps.elasticHost + ':' + envProps.elasticPort);
 
         // Check if todo index already exists?
         const todoIndexExists = elasticClient.indices.exists({
