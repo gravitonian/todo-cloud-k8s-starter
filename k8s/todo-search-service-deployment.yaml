@@ -22,9 +22,6 @@ spec:
     spec:
       restartPolicy: Always
       initContainers:
-      - name: init-rabbitmq
-        image: busybox
-        command: ['sh', '-c', 'until nslookup todo-rabbitmq; do echo waiting for RabbitMQ; sleep 2; done;']
       - name: init-elastic
         image: busybox
         command: ['sh', '-c', 'until nslookup todo-elastic; do echo waiting for ElasticSearch; sleep 2; done;']
